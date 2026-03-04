@@ -1,3 +1,4 @@
+const usefulkeyCode = [13,71,108];
 world.say_ = world.say;
 world.say = function (...args) {
     sendSystemMessage(...args);
@@ -11,6 +12,7 @@ world.onPlayerJoin(({ entity }) => {
     }
     senduserinfomation(entity);
     entity.player.onKeyDown(({ keyCode }) => {
+        if (!usefulkeyCode.includes(keyCode)) return;
         remoteChannel.sendClientEvent(entity,{id: 'onKeyDown', keyCode, time: Date.now()});
     })
     if (!Admin.includes(entity.player.userId)) world.say(`${entity.player.name} 进入地图`);
@@ -21,7 +23,11 @@ world.onPlayerLeave(() => {
 });
 
 world.onChat(({ entity, message }) => {
-    console.warn(message)
+    entity.player.dialog({
+        type: GameDialogType.TEXT,
+        title: '提示',
+        content: '推荐使用武器试验场自带UI,以防部分玩家无法发言导致交流困难',
+    })
     sendmessage(entity,message);
     chatfunction(entity,message);
 })
@@ -101,7 +107,10 @@ remoteChannel.onServerEvent(({ entity, args }) => {
     } else if (args.type === 'getServerTime') {
         remoteChannel.sendClientEvent(entity, {id: 'getServerTime', time: Date.now()});
     } else if (args.type === 'chatMessage') {
-        const message = args.message;
+        let message = args.message;
+        if (message.length > 60) {
+            message.splice(0,60);
+        }
         entity.say(message);
         sendmessage(entity, message);
         chatfunction(entity, message);
